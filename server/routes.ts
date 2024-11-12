@@ -110,65 +110,52 @@ export function registerRoutes(app: Express) {
         }
       }
 
+      // Calculate total
       const total = items.reduce(
         (sum: number, item: OrderItem) => sum + Number(item.price) * item.quantity,
         0
       );
 
-      try {
-        const order = await db.transaction(async (tx) => {
-          // Create order first
-          const [newOrder] = await tx
-            .insert(orders)
-            .values({
-              userId: req.user!.id,
-              total,
-              status: "completed",
-            })
-            .returning();
+      // Create order
+      const [newOrder] = await db
+        .insert(orders)
+        .values({
+          userId: req.user!.id,
+          total,
+          status: "completed",
+        })
+        .returning();
 
-          // Create order items
-          await tx.insert(orderItems).values(
-            items.map((item: OrderItem) => ({
-              orderId: newOrder.id,
-              petId: item.id,
-              quantity: item.quantity,
-              price: item.price,
-            }))
-          );
+      // Create order items
+      await db.insert(orderItems).values(
+        items.map((item: OrderItem) => ({
+          orderId: newOrder.id,
+          petId: item.id,
+          quantity: item.quantity,
+          price: item.price.toString(),
+        }))
+      );
 
-          // Update stock levels
-          for (const item of items) {
-            const [pet] = await tx
-              .select()
-              .from(pets)
-              .where(eq(pets.id, item.id))
-              .limit(1);
+      // Update pet stock
+      for (const item of items) {
+        const [pet] = await db
+          .select()
+          .from(pets)
+          .where(eq(pets.id, item.id))
+          .limit(1);
 
-            if (!pet) {
-              throw new Error(`Pet ${item.id} not found`);
-            }
-
-            if (pet.stock < item.quantity) {
-              throw new Error(`Insufficient stock for ${pet.name}`);
-            }
-
-            await tx
-              .update(pets)
-              .set({ stock: pet.stock - item.quantity })
-              .where(eq(pets.id, item.id));
-          }
-
-          return newOrder;
-        });
-
-        res.json({
-          message: "Order created successfully",
-          order,
-        });
-      } catch (txError: any) {
-        return res.status(400).json({ message: txError.message });
+        if (pet && pet.stock >= item.quantity) {
+          await db
+            .update(pets)
+            .set({ stock: pet.stock - item.quantity })
+            .where(eq(pets.id, item.id));
+        }
       }
+
+      res.json({
+        message: "Order created successfully",
+        order: newOrder,
+      });
     } catch (error) {
       console.error("Order creation error:", error);
       res.status(500).json({ message: "Failed to create order" });
