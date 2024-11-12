@@ -61,6 +61,15 @@ export function registerRoutes(app: Express) {
         if (!item.id || !item.quantity || !item.price) {
           return res.status(400).json({ message: "Invalid item format" });
         }
+        
+        // Validate numeric values
+        if (typeof item.quantity !== 'number' || item.quantity <= 0) {
+          return res.status(400).json({ message: "Invalid quantity" });
+        }
+        
+        if (typeof item.price !== 'number' || item.price <= 0) {
+          return res.status(400).json({ message: "Invalid price" });
+        }
       }
 
       const total = items.reduce(

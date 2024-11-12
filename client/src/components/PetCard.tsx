@@ -30,25 +30,23 @@ export function PetCard({ pet }: PetCardProps) {
 
   return (
     <Card className="overflow-hidden transition-shadow hover:shadow-lg">
-      <Link href={`/pet/${pet.id}`}>
-        <a className="block">
-          <div className="aspect-square overflow-hidden">
-            <img
-              src={pet.imageUrl}
-              alt={pet.name}
-              className="w-full h-full object-cover transition-transform hover:scale-105"
-            />
-          </div>
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              <span>{pet.name}</span>
-              <Badge variant="secondary">
-                {pet.species}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-        </a>
-      </Link>
+      <div onClick={() => window.location.href = `/pet/${pet.id}`} className="cursor-pointer">
+        <div className="aspect-square overflow-hidden">
+          <img
+            src={pet.imageUrl}
+            alt={pet.name}
+            className="w-full h-full object-cover transition-transform hover:scale-105"
+          />
+        </div>
+        <CardHeader>
+          <CardTitle className="flex justify-between items-center">
+            <span>{pet.name}</span>
+            <Badge variant="secondary">
+              {pet.species}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+      </div>
       <CardContent>
         <p className="text-sm text-gray-600 mb-2">{pet.breed}</p>
         <p className="text-sm text-gray-600">Age: {pet.age} years</p>

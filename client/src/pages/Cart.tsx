@@ -26,13 +26,23 @@ export function Cart() {
 
     setIsLoading(true);
     try {
+      // Format items properly for the API
+      const orderItems = items.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: Number(item.price)
+      }));
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items: orderItems }),
       });
 
-      if (!response.ok) throw new Error("Checkout failed");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Checkout failed");
+      }
 
       clearCart();
       toast({
@@ -40,10 +50,10 @@ export function Cart() {
         description: "Thank you for your purchase",
       });
       navigate("/profile");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to place order",
+        description: error.message || "Failed to place order",
         variant: "destructive",
       });
     } finally {
