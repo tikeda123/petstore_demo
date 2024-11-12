@@ -42,6 +42,45 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Get user orders with items
+  app.get("/api/orders", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const userOrders = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.userId, req.user!.id));
+
+      const ordersWithItems = await Promise.all(
+        userOrders.map(async (order) => {
+          const items = await db
+            .select()
+            .from(orderItems)
+            .leftJoin(pets, eq(orderItems.petId, pets.id))
+            .where(eq(orderItems.orderId, order.id));
+
+          return {
+            ...order,
+            items: items.map((item) => ({
+              id: item.order_items.id,
+              quantity: item.order_items.quantity,
+              price: item.order_items.price,
+              pet: item.pets,
+            })),
+          };
+        })
+      );
+
+      res.json(ordersWithItems);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
   // Create order
   app.post("/api/orders", async (req, res) => {
     if (!req.isAuthenticated()) {
@@ -62,7 +101,6 @@ export function registerRoutes(app: Express) {
           return res.status(400).json({ message: "Invalid item format" });
         }
         
-        // Validate numeric values
         if (typeof item.quantity !== 'number' || item.quantity <= 0) {
           return res.status(400).json({ message: "Invalid quantity" });
         }
