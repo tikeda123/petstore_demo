@@ -20,7 +20,8 @@ export function PetCard({ pet }: PetCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
     addToCart(pet);
     toast({
       title: "Added to cart",
@@ -29,40 +30,38 @@ export function PetCard({ pet }: PetCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-lg">
-      <Link href={`/pet/${pet.id}`}>
-        <div className="cursor-pointer">
-          <div className="aspect-square overflow-hidden">
-            <img
-              src={pet.imageUrl}
-              alt={pet.name}
-              className="w-full h-full object-cover transition-transform hover:scale-105"
-            />
-          </div>
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              <span>{pet.name}</span>
-              <Badge variant="secondary">
-                {pet.species}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
+    <Link href={`/pet/${pet.id}`}>
+      <Card className="overflow-hidden transition-shadow hover:shadow-lg cursor-pointer">
+        <div className="aspect-square overflow-hidden">
+          <img
+            src={pet.imageUrl}
+            alt={pet.name}
+            className="w-full h-full object-cover transition-transform hover:scale-105"
+          />
         </div>
-      </Link>
-      <CardContent>
-        <p className="text-sm text-gray-600 mb-2">{pet.breed}</p>
-        <p className="text-sm text-gray-600">Age: {pet.age} years</p>
-        <p className="mt-2 text-lg font-bold">${Number(pet.price).toFixed(2)}</p>
-      </CardContent>
-      <CardFooter>
-        <Button
-          className="w-full"
-          onClick={handleAddToCart}
-          disabled={pet.stock === 0}
-        >
-          {pet.stock > 0 ? "Add to Cart" : "Out of Stock"}
-        </Button>
-      </CardFooter>
-    </Card>
+        <CardHeader>
+          <CardTitle className="flex justify-between items-center">
+            <span>{pet.name}</span>
+            <Badge variant="secondary">
+              {pet.species}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-600 mb-2">{pet.breed}</p>
+          <p className="text-sm text-gray-600">Age: {pet.age} years</p>
+          <p className="mt-2 text-lg font-bold">${Number(pet.price).toFixed(2)}</p>
+        </CardContent>
+        <CardFooter>
+          <Button
+            className="w-full"
+            onClick={handleAddToCart}
+            disabled={pet.stock === 0}
+          >
+            {pet.stock > 0 ? "Add to Cart" : "Out of Stock"}
+          </Button>
+        </CardFooter>
+      </Card>
+    </Link>
   );
 }
