@@ -5,26 +5,31 @@ import "./index.css";
 import { SWRConfig } from "swr";
 import { fetcher } from "./lib/fetcher";
 import { Toaster } from "@/components/ui/toaster";
-import Layout from "./components/Layout";
-import Home from "./pages/Home";
-import PetDetails from "./pages/PetDetails";
-import Cart from "./pages/Cart";
-import Account from "./pages/Account";
-import Admin from "./pages/Admin";
+import { Navbar } from "@/components/Navbar";
+import { Home } from "./pages/Home";
+import { Shop } from "./pages/Shop";
+import { PetDetail } from "./pages/PetDetail";
+import { Cart } from "./pages/Cart";
+import { Admin } from "./pages/Admin";
+import { Profile } from "./pages/Profile";
+import { Login } from "./pages/Login";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <SWRConfig value={{ fetcher }}>
-      <Layout>
+      <Navbar />
+      <main className="min-h-screen bg-background">
         <Switch>
           <Route path="/" component={Home} />
-          <Route path="/pets/:id" component={PetDetails} />
+          <Route path="/shop" component={Shop} />
+          <Route path="/pet/:id" component={PetDetail} />
           <Route path="/cart" component={Cart} />
-          <Route path="/account" component={Account} />
           <Route path="/admin" component={Admin} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/login" component={Login} />
           <Route>404 Page Not Found</Route>
         </Switch>
-      </Layout>
+      </main>
       <Toaster />
     </SWRConfig>
   </StrictMode>

@@ -26,3 +26,30 @@ language = "nodejs"
   pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
     [languages.javascript.languageServer]
     start = "typescript-language-server --stdio"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Development Server"
+
+[[workflows.workflow]]
+name = "Development Server"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
