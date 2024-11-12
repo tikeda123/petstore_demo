@@ -44,6 +44,28 @@ export function registerRoutes(app: Express) {
 
     try {
       const { items } = req.body;
+      
+      // Validate stock levels before processing
+      for (const item of items) {
+        const [pet] = await db
+          .select()
+          .from(pets)
+          .where(eq(pets.id, item.id))
+          .limit(1);
+
+        if (!pet) {
+          return res.status(404).json({ 
+            message: `Pet with ID ${item.id} not found` 
+          });
+        }
+
+        if (pet.stock < item.quantity) {
+          return res.status(400).json({
+            message: `Insufficient stock for ${pet.name}. Available: ${pet.stock}, Requested: ${item.quantity}`
+          });
+        }
+      }
+
       const total = items.reduce(
         (sum: number, item: any) => sum + Number(item.price) * item.quantity,
         0
@@ -54,7 +76,7 @@ export function registerRoutes(app: Express) {
         .values({
           userId: req.user!.id,
           total,
-          status: "pending",
+          status: "completed", // Changed from "pending" to "completed"
         })
         .returning();
 
@@ -82,8 +104,12 @@ export function registerRoutes(app: Express) {
           .where(eq(pets.id, item.id));
       }
 
-      res.json(order);
+      res.json({ 
+        message: "Order created successfully",
+        order 
+      });
     } catch (error) {
+      console.error("Order creation error:", error);
       res.status(500).json({ message: "Failed to create order" });
     }
   });
