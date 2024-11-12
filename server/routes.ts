@@ -4,6 +4,12 @@ import { db } from "db";
 import { pets, orders, orderItems } from "db/schema";
 import { eq } from "drizzle-orm";
 
+interface OrderItem {
+  id: number;
+  quantity: number;
+  price: number;
+}
+
 export function registerRoutes(app: Express) {
   setupAuth(app);
 
@@ -44,70 +50,78 @@ export function registerRoutes(app: Express) {
 
     try {
       const { items } = req.body;
-      
-      // Validate stock levels before processing
+
+      // Validate items array
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: "Invalid order items" });
+      }
+
+      // Validate each item
       for (const item of items) {
-        const [pet] = await db
-          .select()
-          .from(pets)
-          .where(eq(pets.id, item.id))
-          .limit(1);
-
-        if (!pet) {
-          return res.status(404).json({ 
-            message: `Pet with ID ${item.id} not found` 
-          });
-        }
-
-        if (pet.stock < item.quantity) {
-          return res.status(400).json({
-            message: `Insufficient stock for ${pet.name}. Available: ${pet.stock}, Requested: ${item.quantity}`
-          });
+        if (!item.id || !item.quantity || !item.price) {
+          return res.status(400).json({ message: "Invalid item format" });
         }
       }
 
       const total = items.reduce(
-        (sum: number, item: any) => sum + Number(item.price) * item.quantity,
+        (sum: number, item: OrderItem) => sum + Number(item.price) * item.quantity,
         0
       );
 
-      const [order] = await db
-        .insert(orders)
-        .values({
-          userId: req.user!.id,
-          total,
-          status: "completed", // Changed from "pending" to "completed"
-        })
-        .returning();
+      try {
+        const order = await db.transaction(async (tx) => {
+          // Create order first
+          const [newOrder] = await tx
+            .insert(orders)
+            .values({
+              userId: req.user!.id,
+              total,
+              status: "completed",
+            })
+            .returning();
 
-      await db.insert(orderItems).values(
-        items.map((item: any) => ({
-          orderId: order.id,
-          petId: item.id,
-          quantity: item.quantity,
-          price: item.price,
-        }))
-      );
+          // Create order items
+          await tx.insert(orderItems).values(
+            items.map((item: OrderItem) => ({
+              orderId: newOrder.id,
+              petId: item.id,
+              quantity: item.quantity,
+              price: item.price,
+            }))
+          );
 
-      // Update pet stock
-      for (const item of items) {
-        await db
-          .update(pets)
-          .set({
-            stock: db
+          // Update stock levels
+          for (const item of items) {
+            const [pet] = await tx
               .select()
               .from(pets)
               .where(eq(pets.id, item.id))
-              .limit(1)
-              .then(([pet]) => pet.stock - item.quantity),
-          })
-          .where(eq(pets.id, item.id));
-      }
+              .limit(1);
 
-      res.json({ 
-        message: "Order created successfully",
-        order 
-      });
+            if (!pet) {
+              throw new Error(`Pet ${item.id} not found`);
+            }
+
+            if (pet.stock < item.quantity) {
+              throw new Error(`Insufficient stock for ${pet.name}`);
+            }
+
+            await tx
+              .update(pets)
+              .set({ stock: pet.stock - item.quantity })
+              .where(eq(pets.id, item.id));
+          }
+
+          return newOrder;
+        });
+
+        res.json({
+          message: "Order created successfully",
+          order,
+        });
+      } catch (txError: any) {
+        return res.status(400).json({ message: txError.message });
+      }
     } catch (error) {
       console.error("Order creation error:", error);
       res.status(500).json({ message: "Failed to create order" });
