@@ -17,8 +17,8 @@ export function Navbar() {
     <nav className="border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link href="/">
-            <a className="text-2xl font-bold text-[#4A90E2]">PawfectPets</a>
+          <Link href="/" className="text-2xl font-bold text-[#4A90E2]">
+            PawfectPets
           </Link>
 
           <NavigationMenu>
