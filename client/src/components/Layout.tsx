@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/">
-              <a className="text-2xl font-bold text-primary">PetShop</a>
+              <span className="text-2xl font-bold text-primary cursor-pointer">PetShop</span>
             </Link>
 
             <NavigationMenu>
