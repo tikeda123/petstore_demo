@@ -7,7 +7,10 @@
     "dev": "tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push:pg",
+    "db:studio": "drizzle-kit studio",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx db/migrate.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -79,7 +82,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
-    "drizzle-kit": "^0.27.2",
+    "drizzle-kit": "^0.28.0",
     "esbuild": "^0.24.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.14",
