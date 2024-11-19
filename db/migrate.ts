@@ -6,7 +6,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 // Create a PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: true
+  ssl: false
 });
 
 // Create a drizzle database instance
@@ -15,7 +15,7 @@ const db = drizzle(pool);
 // Main migration function
 async function main() {
   console.log("Starting database migration...");
-  
+
   try {
     // This will automatically run needed migrations on the database
     await migrate(db, { migrationsFolder: "./migrations" });
